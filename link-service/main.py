@@ -62,3 +62,19 @@ def delete_link(
     if not success:
         raise HTTPException(status_code=404, detail="Link no encontrado o no autorizado")
     return None # 204 No Content no devuelve cuerpo
+
+
+@app.post("/folders", response_model=schemas.Folder, status_code=status.HTTP_201_CREATED)
+def create_folder(
+    folder: schemas.FolderCreate,
+    db: Session = Depends(get_db),
+    owner_id: int = Depends(security.get_current_user_id)
+):
+    return crud.create_folder(db, folder, owner_id)
+
+@app.get("/folders", response_model=List[schemas.Folder])
+def read_folders(
+    db: Session = Depends(get_db),
+    owner_id: int = Depends(security.get_current_user_id)
+):
+    return crud.get_folders(db, owner_id)
