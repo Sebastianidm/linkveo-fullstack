@@ -21,7 +21,7 @@ def create_user_link(db: Session, link: schemas.LinkCreate, owner_id: int):
     db_link = models.Link(
         title=final_title,
         url=str(link.url),
-        image=scraped_image, # <--- GUARDAMOS LA IMAGEN
+        image=scraped_image, 
         owner_id=owner_id
     )
 
@@ -30,3 +30,13 @@ def create_user_link(db: Session, link: schemas.LinkCreate, owner_id: int):
     db.refresh(db_link)
 
     return db_link
+
+def delete_user_link(db: Session, link_id: int, owner_id: int):
+    # Buscamos el link asegurándonos que pertenezca al usuario (owner_id)
+    db_link = db.query(models.Link).filter(models.Link.id == link_id, models.Link.owner_id == owner_id).first()
+    
+    if db_link:
+        db.delete(db_link)
+        db.commit()
+        return True 
+    return 

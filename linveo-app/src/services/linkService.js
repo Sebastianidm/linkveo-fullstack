@@ -44,3 +44,16 @@ export const apiCreateLink = async (url, token) => {
     throw new Error("Error al guardar el enlace");
   }
 };
+
+
+export const apiDeleteLink = async (linkId, token) => {
+  try {
+    await axios.delete(`${API_URL}/links/${linkId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return true;
+  } catch (error) {
+    console.error("Error eliminando link:", error);
+    throw new Error("No se pudo eliminar el enlace");
+  }
+};

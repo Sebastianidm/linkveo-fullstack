@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, status
+from fastapi import FastAPI, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from typing import List # Para devolver una lista de links
 import models
@@ -50,3 +50,15 @@ def read_links_for_user(
     """
     links = crud.get_links_by_owner(db, owner_id=owner_id)
     return links
+
+# --- ENDPOINT PARA BORRAR UN LINK (PROTEGIDO) ---
+@app.delete("/links/{link_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_link(
+    link_id: int,
+    db: Session = Depends(get_db),
+    owner_id: int = Depends(security.get_current_user_id)
+):
+    success = crud.delete_user_link(db, link_id, owner_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Link no encontrado o no autorizado")
+    return None # 204 No Content no devuelve cuerpo
