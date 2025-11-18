@@ -1,0 +1,24 @@
+# --- Dependencias ---
+**/node_modules
+**/venv
+**/env
+**/.venv
+
+# --- Base de Datos y Archivos Locales ---
+**/*.db
+**/*.sqlite3
+**/postgres_data
+
+# --- Compilación y Build ---
+**/dist
+**/build
+**/__pycache__
+**/*.pyc
+
+# --- Variables de Entorno ---
+**/.env
+**/.env.local
+
+# --- Sistema Operativo ---
+.DS_Store
+Thumbs.db

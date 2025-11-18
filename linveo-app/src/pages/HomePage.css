@@ -1,0 +1,105 @@
+/* src/pages/HomePage.css */
+
+.homepage-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.homepage-container h2 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.homepage-container p {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+/* Estilos del formulario de enlaces */
+.link-form-container {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.link-form {
+  display: flex;
+  gap: 1rem;
+}
+
+.link-form input[type="url"] {
+  flex-grow: 1; /* Hace que el input ocupe el espacio disponible */
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.link-form button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  background-color: #28a745; /* Un color verde */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.link-form button:hover {
+  background-color: #218838;
+}
+
+/* Estilos para la futura lista */
+.links-list {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.links-list h3 {
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+}
+.error-message {
+  color: #dc3545;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+/* Estilos de la lista de enlaces */
+.links-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.links-list li {
+  padding: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.links-list li:last-child {
+  border-bottom: none;
+}
+
+.links-list li a {
+  text-decoration: none;
+  color: #007bff;
+  font-weight: 500;
+}
+
+.links-list li a:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # --- BASE DE DATOS CON HEALTHCHECK ---
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=linkveo_user
+      - POSTGRES_PASSWORD=linkveo_password
+      - POSTGRES_DB=linkveo_db
+    ports:
+      - "5432:5432"
+    # ESTO ES NUEVO: Comprueba cada 5s si la BD responde
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linkveo_user -d linkveo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- SERVICIO 1: USUARIOS ---
+  user-service:
+    build: ./user-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./user-service:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://linkveo_user:linkveo_password@db/linkveo_db
+    depends_on:
+      db:
+        condition: service_healthy # <--- ESPERA A QUE LA BD ESTÉ LISTA
+
+  # --- SERVICIO 2: LINKS ---
+  link-service:
+    build: ./link-service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./link-service:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://linkveo_user:linkveo_password@db/linkveo_db
+    depends_on:
+      db:
+        condition: service_healthy # <--- ESPERA A QUE LA BD ESTÉ LISTA
+
+  # --- SERVICIO 3: FRONTEND ---
+  frontend:
+    build: ./linveo-app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./linveo-app:/app
+      - /app/node_modules
+    depends_on:
+      - user-service
+      - link-service
+
+volumes:
+  postgres_data:
