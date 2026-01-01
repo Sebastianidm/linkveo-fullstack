@@ -5,7 +5,7 @@
 ![Linkveo Dashboard](./linveo-app/public/screenshot.png)
 
 
-## 📖 Descripción del Proyecto
+##  Descripción del Proyecto
 
 **Linkveo** no es un monolito tradicional. Es un sistema distribuido diseñado para la escalabilidad y el mantenimiento eficiente. El objetivo principal es permitir a los usuarios organizar recursos web y, crucialmente, **visualizar el estado de salud (health check)** de los mismos mediante una interfaz reactiva e intuitiva.
 
@@ -30,7 +30,7 @@ Dividido por dominios para asegurar la separación de responsabilidades:
 * **Link Core Service:** (Python/FastAPI) Gestiona el ciclo de vida de los recursos y realiza **Web Scraping** (BeautifulSoup4) para enriquecer los metadatos automáticamente.
 * **Base de Datos:** PostgreSQL (Relacional) con SQLAlchemy ORM.
 
-### 🐳 Infraestructura (DevOps)
+###  Infraestructura (DevOps)
 * **Docker:** Contenerización individual de cada servicio y la base de datos.
 * **Docker Compose:** Orquestación de la red interna, volúmenes y variables de entorno.
 
