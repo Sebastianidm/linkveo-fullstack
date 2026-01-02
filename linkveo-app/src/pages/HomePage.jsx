@@ -1,102 +1,118 @@
+/**
+ * Page: HomePage (Dashboard Principal)
+ * Descripción: Vista central de la aplicación.
+ * Responsabilidades:
+ * - Orquestación de datos: Sincroniza links y carpetas desde los microservicios.
+ * - Gestión de Estado UI: Controla modales, menús móviles y filtros activos.
+ * - Lógica de Negocio: Implementa el CRUD de recursos (Crear, Leer, Eliminar).
+ * - Observabilidad: Integra el sistema de monitoreo visual (Sentinel).
+ */
+
 import React, { useState, useEffect } from 'react';
-import { Menu, Plus, Folder, Trash2, LogOut, ChevronDown } from 'lucide-react'; // Quité Settings que no se usaba
+import { Menu, Plus, Folder, Trash2, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { apiGetLinks, apiDeleteLink } from '../services/linkService';
 import axios from 'axios';
 import SentinelBadge from '../components/SentinelBadge';
 
+// Configuración de API (Idealmente debería venir de variables de entorno)
+const API_URL = 'http://localhost:8001';
+
+/**
+ * Helper: simulatedHealthCheck
+ * Simula la telemetría de un sistema de monitoreo real.
+ * Genera estados aleatorios (Operational, Degraded, Down) y latencia
+ * para demostrar la capacidad de visualización de datos de la UI.
+ */
 const simulatedHealthCheck = () => {
   const rand = Math.random();
-  const latency = Math.floor(Math.random() * 200) + 20;
+  const latency = Math.floor(Math.random() * 200) + 20; // 20ms - 220ms
 
   if (rand > 0.9) return { status: 'down', latency: 0 };
   if (rand > 0.7) return { status: 'degraded', latency: latency + 300 };
   return { status: 'operational', latency };
 };
 
-// URL de tu microservicio
-const API_URL = 'http://localhost:8001';
-
 export default function HomePage() {
   const { user, logout, token } = useAuth();
 
-  // --- ESTADOS ---
+  // --- Estado de Datos (Domain State) ---
   const [links, setLinks] = useState([]);
   const [folders, setFolders] = useState([]);
 
-  const [activeFolder, setActiveFolder] = useState(null); // null = 'All Links'
+  // --- Estado de UI (UI State) ---
+  const [activeFolder, setActiveFolder] = useState(null); // null implica 'Todos'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const [newLinkUrl, setNewLinkUrl] = useState('');
-  const [selectedFolderForNewLink, setSelectedFolderForNewLink] = useState(null);
-
-  const [newFolderName, setNewFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // --- CARGA DE DATOS ---
+  // --- Estado de Formularios (Form State) ---
+  const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [newFolderName, setNewFolderName] = useState('');
+  const [selectedFolderForNewLink, setSelectedFolderForNewLink] = useState(null);
+
+  /**
+   * Effect: Sincronización de Datos Inicial
+   * Carga paralelamente los recursos necesarios al montar el componente.
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1. Cargar Links
-        const fetchedLinks = await apiGetLinks(token);
-        setLinks(fetchedLinks);
+        // Ejecutamos peticiones en paralelo para optimizar tiempo de carga
+        const [fetchedLinks, resFolders] = await Promise.all([
+          apiGetLinks(token),
+          axios.get(`${API_URL}/folders`, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
 
-        // 2. Cargar Carpetas
-        const resFolders = await axios.get(`${API_URL}/folders`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        setLinks(fetchedLinks);
         setFolders(resFolders.data);
       } catch (error) {
-        console.error("Error cargando datos:", error);
+        console.error("Error crítico sincronizando dashboard:", error);
       }
     };
 
-    if (token) {
-      fetchData();
-    }
+    if (token) fetchData();
   }, [token]);
 
-  // --- LÓGICA ---
+  // --- Lógica Derivada (Computed Properties) ---
 
-  const filteredLinks =
-    activeFolder === 'uncategorized' // CASO 1: Vista "Sin Carpeta"
-      ? links.filter(link => link.folder_id === null)
-      : activeFolder // CASO 2: Una carpeta específica
-        ? links.filter(link => link.folder_id === activeFolder)
-        : links; // CASO 3: Vista "Todos" (Default)
+  // Filtra los links en memoria sin necesidad de nuevas peticiones al backend
+  const filteredLinks = activeFolder === 'uncategorized'
+    ? links.filter(link => link.folder_id === null)
+    : activeFolder
+      ? links.filter(link => link.folder_id === activeFolder)
+      : links;
+
+  // --- Manejadores de Eventos (Handlers) ---
 
   const handleAddLink = async () => {
     if (!newLinkUrl) return;
     try {
+      // Intento optimista de extraer el título desde la URL
       let title = newLinkUrl;
-      try {
-        title = new URL(newLinkUrl).hostname;
-      } catch (e) {
-        console.log("No se pudo extraer hostname:", e);
-      }
+      try { title = new URL(newLinkUrl).hostname; } catch (_) { /* Fallback al raw URL */ }
 
       const response = await axios.post(`${API_URL}/links`,
         { title, url: newLinkUrl, folder_id: selectedFolderForNewLink },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      // Actualización optimista de la lista
       setLinks([response.data, ...links]);
       setNewLinkUrl('');
     } catch (error) {
-      console.error("Error creando link:", error);
-      alert("Error al crear link");
+      console.error("Fallo al crear recurso:", error);
+      alert("No se pudo guardar el enlace.");
     }
   };
 
   const handleDeleteLink = async (id) => {
-    if (!confirm("¿Eliminar enlace?")) return;
+    if (!confirm("¿Confirmar eliminación del recurso?")) return;
     try {
       await apiDeleteLink(id, token);
-      setLinks(links.filter(l => l.id !== id));
+      setLinks(prev => prev.filter(l => l.id !== id));
     } catch (error) {
-      console.error("Error eliminando link:", error);
-      alert("Error al eliminar");
+      console.error("Fallo al eliminar recurso:", error);
     }
   };
 
@@ -111,16 +127,14 @@ export default function HomePage() {
       setNewFolderName('');
       setIsCreatingFolder(false);
     } catch (error) {
-      console.error("Error creando carpeta:", error);
-      alert("Error creando carpeta");
+      console.error("Fallo al crear colección:", error);
     }
   };
 
-  // --- COMPONENTES INTERNOS ---
-
+  // --- Sub-componente de Navegación Lateral (Render Prop Pattern) ---
   const SidebarContent = () => (
     <div className="flex h-full flex-col bg-white/50 backdrop-blur-md border-r border-white/20">
-      {/* Perfil */}
+      {/* User Profile Summary */}
       <div className="flex flex-col items-center gap-4 border-b border-gray-200/50 p-6">
         <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Linkveo</h1>
         <div className="flex items-center gap-3 w-full bg-white/60 p-2 rounded-xl shadow-sm">
@@ -133,18 +147,19 @@ export default function HomePage() {
             </p>
             <p className="text-xs text-gray-500 truncate">Plan Gratuito</p>
           </div>
-          <button onClick={logout} className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition">
+          <button onClick={logout} className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition" title="Cerrar Sesión">
             <LogOut className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* Lista de Carpetas */}
+      {/* Navigation / Folders List */}
       <div className="flex-1 overflow-y-auto p-4">
         <h2 className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
           Mis Colecciones
         </h2>
         <div className="space-y-1">
+          {/* Opción: Todos */}
           <button
             onClick={() => { setActiveFolder(null); setMobileMenuOpen(false); }}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${activeFolder === null
@@ -157,7 +172,7 @@ export default function HomePage() {
             <span className="text-xs opacity-70">{links.length}</span>
           </button>
 
-          {/* Botón "Sin Clasificar" */}
+          {/* Opción: Sin Clasificar */}
           <button
             onClick={() => { setActiveFolder('uncategorized'); setMobileMenuOpen(false); }}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${activeFolder === 'uncategorized'
@@ -165,6 +180,7 @@ export default function HomePage() {
               : "text-gray-600 hover:bg-white/60 hover:text-gray-900"
               }`}
           >
+            {/* Icono SVG inline para Folder Open */}
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>
             <span className="flex-1 text-left">Sin Clasificar</span>
             <span className="text-xs opacity-70">
@@ -172,6 +188,7 @@ export default function HomePage() {
             </span>
           </button>
 
+          {/* Carpetas Dinámicas */}
           {folders.map((folder) => (
             <button
               key={folder.id}
@@ -205,10 +222,13 @@ export default function HomePage() {
 
   return (
     <div className="flex h-screen bg-[#F5F5F7] overflow-hidden font-sans">
+
+      {/* Sidebar Desktop */}
       <aside className="hidden lg:block w-[280px] h-full shadow-xl shadow-gray-200/50 z-20">
         <SidebarContent />
       </aside>
 
+      {/* Sidebar Mobile (Drawer) */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
@@ -218,6 +238,7 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         <header className="lg:hidden flex items-center p-4 bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-10">
           <button onClick={() => setMobileMenuOpen(true)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600">
@@ -229,6 +250,7 @@ export default function HomePage() {
         <div className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="max-w-5xl mx-auto">
 
+            {/* Input Area: Create New Link */}
             <div className="relative mb-8 group z-10">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition" />
               <div className="relative flex items-center bg-white rounded-full shadow-lg shadow-gray-200/50 p-2 pl-6">
@@ -253,6 +275,7 @@ export default function HomePage() {
                     <ChevronDown className="h-3 w-3" />
                   </button>
 
+                  {/* Dropdown de Selección de Carpeta */}
                   {isDropdownOpen && (
                     <div className="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 overflow-hidden z-50">
                       <button
@@ -283,6 +306,7 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Header de la Sección Activa */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-800">
                 {activeFolder === 'uncategorized'
@@ -294,6 +318,7 @@ export default function HomePage() {
               <span className="text-sm text-gray-400">{filteredLinks.length} links</span>
             </div>
 
+            {/* Grid de Recursos / Empty State */}
             {filteredLinks.length === 0 ? (
               <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-3xl bg-white/50">
                 <Folder className="mx-auto h-12 w-12 text-gray-300 mb-3" />
@@ -302,10 +327,8 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
-
-                {/* --- AQUI ESTA LA MAGIA DE SENTINEL CORREGIDA --- */}
+                {/* Renderizado de Links con Monitoreo (Sentinel) */}
                 {filteredLinks.map((link) => {
-                  // Generamos la salud simulada DENTRO del map
                   const health = simulatedHealthCheck();
 
                   return (
@@ -323,7 +346,7 @@ export default function HomePage() {
                           <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-blue-50 to-purple-50">🔗</div>
                         )}
 
-                        {/* Badge de Sentinel posicionado */}
+                        {/* Sentinel Badge: Indicador Visual de Salud */}
                         <div className="absolute top-2 left-2 z-10">
                           <SentinelBadge status={health.status} latency={health.latency} />
                         </div>
@@ -348,6 +371,7 @@ export default function HomePage() {
         </div>
       </main>
 
+      {/* Modal: Crear Carpeta */}
       {isCreatingFolder && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm animate-in zoom-in-95">

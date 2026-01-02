@@ -1,25 +1,32 @@
+/**
+ * Componente: Navbar
+ * Descripción: Barra de navegación principal persistente (Sticky).
+ * Funcionalidad: 
+ * - Renderizado condicional de acciones basado en el estado de autenticación (Auth/Guest).
+ * - Implementa diseño 'Glassmorphism' para mantener contexto visual al hacer scroll.
+ */
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Navbar() {
-  // 1. Recuperamos nuestra lógica de autenticación
+  // Consumo del contexto para determinar qué menú mostrar
   const { isAuth, logout } = useAuth();
 
   return (
-    // 2. Aquí empieza el diseño de v0 (con clases Tailwind)
-    <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-gray-200">
+    <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-gray-200 transition-all">
       <div className="max-w-5xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          
-          {/* Logo */}
-          <Link to="/" className="text-xl font-bold text-gray-800 tracking-tight">
+
+          {/* Brand Identity */}
+          <Link to="/" className="text-xl font-bold text-gray-800 tracking-tight hover:opacity-80 transition-opacity">
             Linkveo
           </Link>
 
-          {/* Acciones (Lógica condicional) */}
+          {/* Navegación Condicional */}
           {isAuth ? (
-            // --- ESTADO: LOGUEADO ---
+            // Vista de Usuario Autenticado
             <div className="flex items-center gap-6">
               <Link
                 to="/profile"
@@ -27,7 +34,7 @@ export default function Navbar() {
               >
                 Mi Perfil
               </Link>
-              <button 
+              <button
                 onClick={logout}
                 className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors"
               >
@@ -35,7 +42,7 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            // --- ESTADO: NO LOGUEADO ---
+            // Vista de Visitante (Guest)
             <div className="flex items-center gap-6">
               <Link
                 to="/login"
@@ -43,10 +50,9 @@ export default function Navbar() {
               >
                 Iniciar Sesión
               </Link>
-              {/* El botón de "Get Started" ahora lleva al registro */}
-              <Link 
+              <Link
                 to="/register"
-                className="px-6 py-2 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors"
+                className="px-6 py-2 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors shadow-sm"
               >
                 Empezar
               </Link>

@@ -1,7 +1,15 @@
+/**
+ * Componente: SentinelBadge
+ * Descripción: Visualizador semántico de estados de salud para recursos.
+ * Funcionalidad: Clasifica y estiliza métricas de disponibilidad y latencia
+ * siguiendo un patrón de diseño orientado a dashboards de monitoreo.
+ */
+
 import React from 'react';
 import { Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 export default function SentinelBadge({ status, latency }) {
+    // Diccionario de configuración para centralizar la lógica de estilos según el estado
     const statusConfig = {
         operational: {
             color: 'bg-green-100 text-green-700 border-green-200',
@@ -20,6 +28,7 @@ export default function SentinelBadge({ status, latency }) {
         }
     };
 
+    // Fallback a 'operational' para asegurar resiliencia en la UI
     const config = statusConfig[status] || statusConfig.operational;
 
     return (

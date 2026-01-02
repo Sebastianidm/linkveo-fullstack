@@ -1,35 +1,51 @@
+/**
+ * Page: LoginPage
+ * Descripción: Vista de inicio de sesión.
+ * Responsabilidades:
+ * - Manejo de estado del formulario (Controlled Components).
+ * - Comunicación con AuthContext para ejecutar la autenticación.
+ * - Redirección automática (Route Guarding inverso) si ya existe sesión.
+ * - Feedback visual de errores y estado de carga (Loading/Error UI).
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
 
 export default function LoginPage() {
+  // --- Local State (Form Data) ---
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Traemos la lógica del contexto
+  // --- Global State & Navigation ---
   const { login, isAuth, loading, error } = useAuth();
   const navigate = useNavigate();
 
-  // Redirigir si ya está logueado
+  /**
+   * Effect: Auth Redirect Policy
+   * Si el usuario ya está autenticado (isAuth=true),
+   * prevenimos que acceda al login y lo redirigimos al Dashboard.
+   */
   useEffect(() => {
     if (isAuth) {
-      navigate('/');
+      // 'replace: true' evita que el usuario pueda volver al login con el botón 'Atrás'
+      navigate('/', { replace: true });
     }
   }, [isAuth, navigate]);
 
   const handleSubmit = async (event) => {
-    event.preventDefault();
+    event.preventDefault(); // Prevenimos el reload nativo del navegador
     await login(email, password);
   };
 
   return (
-    // CONTENEDOR PRINCIPAL: Centrado perfecto, fondo gris Apple
+    // Layout Container: Centrado vertical/horizontal con fondo distintivo
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-[#F5F5F7]">
-      
-      {/* TARJETA: Blanca, bordes redondeados (rounded-3xl), sombra suave */}
+
+      {/* Auth Card Container */}
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-        
-        {/* ENCABEZADO */}
+
+        {/* Header Section */}
         <div className="text-center">
           <h2 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
             Iniciar Sesión
@@ -39,18 +55,18 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* FORMULARIO */}
+        {/* Login Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          
-          {/* MENSAJE DE ERROR (Si existe) */}
+
+          {/* Feedback Visual: Mensajes de Error */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3 text-center">
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3 text-center animate-pulse">
               {error}
             </div>
           )}
 
           <div className="space-y-4">
-            {/* INPUT EMAIL */}
+            {/* Input: Email */}
             <div>
               <label htmlFor="email" className="sr-only">Email</label>
               <input
@@ -64,8 +80,8 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            
-            {/* INPUT PASSWORD */}
+
+            {/* Input: Password */}
             <div>
               <label htmlFor="password" className="sr-only">Contraseña</label>
               <input
@@ -81,7 +97,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* BOTÓN: Azul Apple (#0071e3), redondeado completo (rounded-full) */}
+          {/* Action Button: Con estado de carga */}
           <div>
             <button
               type="submit"
@@ -100,7 +116,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* FOOTER: Link a Registro */}
+          {/* Footer: Redirección a Registro */}
           <div className="text-center text-sm">
             <span className="text-gray-500">¿No tienes cuenta? </span>
             <Link to="/register" className="font-medium text-[#0071e3] hover:text-[#0077ed] hover:underline transition-colors">

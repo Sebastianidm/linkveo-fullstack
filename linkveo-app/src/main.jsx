@@ -1,28 +1,40 @@
-// src/main.jsx
+/**
+ * Entry Point: main.jsx
+ * Descripción: Punto de entrada de la aplicación React.
+ * Responsabilidades:
+ * - Configuración del Enrutador (Client-Side Routing) con react-router-dom.
+ * - Definición de rutas públicas y protegidas (Route Guards).
+ * - Inyección de Proveedores Globales (AuthProvider) para gestión de estado.
+ * - Renderizado del árbol de componentes en el DOM.
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-// Tus imports (asegúrate de que HomePage y ProtectedRoute estén)
+// Layouts & Pages
 import App from './App.jsx';
 import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
-import ProtectedRoute from './components/ProtectedRoute.jsx'; // <-- Importante
 
+// Security Components
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+
+// Context Providers
 import AuthProvider from './context/AuthProvider.jsx';
 import './index.css';
 
+// Configuración del Router (Data API de React Router v6.4+)
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: <App />, // Layout Principal (Navbar + Outlet)
     children: [
       {
-        index: true, // <-- Esta es la ruta raíz '/'
-        // --- ¡ESTE ES EL CAMBIO! ---
-        // Antes era solo <HomePage />, ahora la envolvemos
+        index: true, // Ruta raíz: '/'
+        // Envolvemos la Home en ProtectedRoute para forzar autenticación
         element: (
           <ProtectedRoute>
             <HomePage />
@@ -39,6 +51,7 @@ const router = createBrowserRouter([
       },
       {
         path: '/profile',
+        // Ruta protegida: Solo accesible si hay sesión activa
         element: (
           <ProtectedRoute>
             <ProfilePage />
@@ -49,9 +62,12 @@ const router = createBrowserRouter([
   },
 ]);
 
-// ... (El resto del archivo ReactDOM.render sigue igual)
+// Renderizado del Árbol de la Aplicación
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
+    {/* AuthProvider envuelve al Router para que el estado de autenticación 
+      esté disponible durante la navegación y en todas las páginas.
+    */}
     <AuthProvider>
       <RouterProvider router={router} />
     </AuthProvider>
