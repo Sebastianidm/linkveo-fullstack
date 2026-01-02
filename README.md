@@ -2,7 +2,7 @@
 
 > Plataforma SaaS de gestión y monitoreo de recursos digitales, construida sobre una arquitectura de microservicios moderna y contenerizada.
 
-![Linkveo Dashboard](./linveo-app/public/screenshot.png)
+![Linkveo Dashboard](./linkveo-app/public/screenshot.png)
 
 ##  Descripción del Proyecto
 
